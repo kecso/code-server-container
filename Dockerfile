@@ -18,6 +18,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
 # Install Cursor Agent
-RUN curl -fsSL https://cursor.com | bash
+RUN curl -fsSL https://cursor.com/install | bash
 
 ENV PATH="/config/.local/bin:${PATH}"
