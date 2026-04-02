@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Start or reuse ssh-agent with a stable socket, save env for new shells, then ssh-add.
+# Run once after container start; enter passphrase when prompted. Good until restart.
+
+set -euo pipefail
+
+umask 077
+mkdir -p "${HOME}/.ssh"
+chmod 700 "${HOME}/.ssh"
+
+SOCK="${HOME}/.ssh/agent.sock"
+ENVFILE="${HOME}/.ssh/agent.env"
+
+_ssh_agent_ok() {
+  [ -S "${SSH_AUTH_SOCK:-}" ] || return 1
+  local rc=0
+  ssh-add -l >/dev/null 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] || [ "$rc" -eq 1 ]
+}
+
+if [ -f "${ENVFILE}" ]; then
+  # shellcheck source=/dev/null
+  . "${ENVFILE}"
+fi
+
+if _ssh_agent_ok; then
+  echo "ssh-agent already running (${SSH_AUTH_SOCK})."
+  echo "Add keys (passphrase if needed); Ctrl+C to skip."
+  ssh-add "$@" || true
+  exit 0
+fi
+
+unset SSH_AUTH_SOCK SSH_AGENT_PID
+rm -f "${SOCK}" "${ENVFILE}"
+
+eval "$(ssh-agent -s -a "${SOCK}")"
+
+{
+  printf 'export SSH_AUTH_SOCK=%q\n' "${SSH_AUTH_SOCK}"
+  printf 'export SSH_AGENT_PID=%q\n' "${SSH_AGENT_PID}"
+} > "${ENVFILE}"
+
+echo "Agent started. Enter key passphrase(s) when prompted (empty line to use defaults)."
+ssh-add "$@"
+
+echo ""
+echo "Done. New bash sessions load ${ENVFILE} automatically until this container restarts."
+echo "If Git from the UI still fails, use Terminal > New Terminal or reload the window once."

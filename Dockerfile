@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y docker-ce-cli \
 # 3b. docker.sock: set host docker GID at runtime (defaults to 999). In Portainer / compose:
 #     environment:
 #       DOCKER_GID: "989"   # host: getent group docker | cut -d: -f3
-COPY docker-gid-init /custom-cont-init.d/99-docker-gid
+COPY scripts/docker-gid-init /custom-cont-init.d/99-docker-gid
 RUN chmod +x /custom-cont-init.d/99-docker-gid
 
 # 4. Install Cursor Agent
@@ -40,3 +40,12 @@ RUN curl -fsSL https://cursor.com/install | bash
 
 # 5. Ensure the PATH is correct for the 'abc' user
 ENV PATH="/config/.local/bin:${PATH}"
+
+# 6. Git over SSH with passphrase: run `setup-git-ssh` once per container start; new bash
+#    sessions load ~/.ssh/agent.env automatically until restart.
+COPY scripts/setup-git-ssh /usr/local/bin/setup-git-ssh
+COPY scripts/99-git-ssh-agent.sh /etc/profile.d/99-git-ssh-agent.sh
+RUN chmod +x /usr/local/bin/setup-git-ssh \
+ && chmod 644 /etc/profile.d/99-git-ssh-agent.sh \
+ && printf '\n# Load ssh-agent env for Git (see setup-git-ssh)\n' >> /etc/bash.bashrc \
+ && printf 'if [ -f /etc/profile.d/99-git-ssh-agent.sh ]; then . /etc/profile.d/99-git-ssh-agent.sh; fi\n' >> /etc/bash.bashrc
