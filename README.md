@@ -38,6 +38,20 @@ If you use **Git over SSH** with a **passphrase-protected** private key, run **`
 setup-git-ssh /config/.ssh/my_custom_key
 ```
 
+### Extensions fail to install (permission denied)
+
+code-server stores the UI profile under **`/config/data`** and extensions under **`/config/extensions`**. If those paths were created on the **host** (for example by Docker/Portainer when you first mapped the volume) they are often **`root`-owned**. The app runs as **`abc`**, so it cannot write there — extension installs fail, and logs may show **`Could not create socket at .../config/data/code-server-ipc.sock`**.
+
+**Fix (once):** from the host, set ownership to match your container user (default LinuxServer **`PUID` / `PGID`** is often `1000`, or whatever you set):
+
+```bash
+sudo chown -R 1000:1000 /path/on/host/config/data /path/on/host/config/extensions
+```
+
+Or **inside the container** (as root): `chown -R abc:abc /config/data /config/extensions /config/workspace`.
+
+**Prevent:** this image includes a startup script that **`chown`s** those directories to **`abc`** when they are not already owned by `abc`, so a **rebuilt image** fixes bind mounts that were created with wrong ownership.
+
 ### Typical LinuxServer environment variables
 
 Use the [upstream parameters](https://github.com/linuxserver/docker-code-server#parameters) as needed, for example:

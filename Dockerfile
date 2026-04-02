@@ -32,8 +32,10 @@ RUN apt-get update && apt-get install -y docker-ce-cli \
 # 3b. docker.sock: set host docker GID at runtime (defaults to 999). In Portainer / compose:
 #     environment:
 #       DOCKER_GID: "989"   # host: getent group docker | cut -d: -f3
+COPY scripts/97-fix-config-subdir-perms /custom-cont-init.d/97-fix-config-subdir-perms
 COPY scripts/docker-gid-init /custom-cont-init.d/99-docker-gid
-RUN chmod +x /custom-cont-init.d/99-docker-gid
+RUN chmod +x /custom-cont-init.d/97-fix-config-subdir-perms \
+ && chmod +x /custom-cont-init.d/99-docker-gid
 
 # 4. Install Cursor Agent
 RUN curl -fsSL https://cursor.com/install | bash
