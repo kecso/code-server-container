@@ -1,0 +1,24 @@
+#!/usr/bin/with-contenv bash
+# shellcheck shell=bash
+# Runs at container start (after LinuxServer init-adduser). Ensures user abc is in a
+# group matching the host docker.sock GID. s6-setuidgid ignores Compose group_add.
+set -e
+
+DOCKER_GID=${DOCKER_GID:-999}
+
+if getent group docker >/dev/null 2>&1; then
+  cur=$(getent group docker | cut -d: -f3)
+  if [[ "${cur}" != "${DOCKER_GID}" ]]; then
+    groupdel docker
+  fi
+fi
+
+if ! getent group docker >/dev/null 2>&1; then
+  if getent group "${DOCKER_GID}" >/dev/null 2>&1; then
+    groupadd -o -g "${DOCKER_GID}" docker
+  else
+    groupadd -g "${DOCKER_GID}" docker
+  fi
+fi
+
+usermod -aG docker abc
