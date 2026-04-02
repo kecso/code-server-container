@@ -15,6 +15,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-venv \
     docker.io \
  && npm install -g nodemon \
+ # Download and install official Docker CLI binary
+ && curl -fsSL https://docker.com | tar xvz -C /tmp/ \
+ && mv /tmp/docker/docker /usr/local/bin/docker \
+ && rm -rf /tmp/docker \
  && rm -rf /var/lib/apt/lists/*
 
 # Install Cursor Agent
