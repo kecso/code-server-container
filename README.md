@@ -28,6 +28,16 @@ The LinuxServer base already includes **git**, **sudo**, **nano**, and the code-
 | **`HOME`** | **`/config`**. Cursor Agent installs into `/config/.local` (`agent` / `cursor-agent` on `PATH`). |
 | **Process user** | **`abc`** (LinuxServer standard). Map host ownership with **`PUID`** / **`PGID`**. |
 
+### Git over SSH (`setup-git-ssh`)
+
+If you use **Git over SSH** with a **passphrase-protected** private key, run **`setup-git-ssh`** once after each container start (it is installed as `/usr/local/bin/setup-git-ssh`). The script starts or reuses `ssh-agent` with a stable socket under `~/.ssh`, writes `~/.ssh/agent.env`, and runs **`ssh-add`**. New **bash** terminals load that environment automatically until the container restarts (via `/etc/profile.d/99-git-ssh-agent.sh` and `bash.bashrc`). If integrated Git still fails, open a new terminal or reload the window once (the script prints the same hint).
+
+**Arguments / key paths:** With **no arguments**, `ssh-add` uses SSH’s **default** private key locations and names (typically `~/.ssh/id_ed25519`, `~/.ssh/id_rsa`, and similar). If your key is **not** in one of those defaults—for example it lives elsewhere or uses a custom filename—pass the **private key file path(s)** explicitly (same as `ssh-add`; multiple paths are allowed):
+
+```bash
+setup-git-ssh /config/.ssh/my_custom_key
+```
+
 ### Typical LinuxServer environment variables
 
 Use the [upstream parameters](https://github.com/linuxserver/docker-code-server#parameters) as needed, for example:
